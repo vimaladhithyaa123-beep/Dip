@@ -1,0 +1,45 @@
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+
+img = cv2.imread("zebra.jpg", 0)
+
+freq_levels = [1/2, 1/4, 1/8, 1/16]
+spatial_levels = [1/2, 1/4, 1/8, 1/16]
+
+freq_results = []
+spatial_results = []
+
+f = np.fft.fft2(img)
+fshift = np.fft.fftshift(f)
+
+rows, cols = img.shape
+
+for scale in freq_levels:
+    r = int(rows * scale)
+    c = int(cols * scale)
+    mask = np.zeros_like(img)
+    mask[rows//2 - r//2 : rows//2 + r//2,
+         cols//2 - c//2 : cols//2 + c//2] = 1
+    filtered = fshift * mask
+    freq_img = np.abs(np.fft.ifft2(np.fft.ifftshift(filtered)))
+    freq_results.append(freq_img)
+
+for scale in spatial_levels:
+    resized = cv2.resize(img, (0,0), fx=scale, fy=scale,
+                         interpolation=cv2.INTER_NEAREST)
+    restored = cv2.resize(resized, (cols, rows),
+                          interpolation=cv2.INTER_NEAREST)
+    spatial_results.append(restored)
+
+plt.figure(figsize=(10,10))
+plt.subplot(4,2,1); plt.title("Freq 1/2"); plt.imshow(freq_results[0], cmap='gray')
+plt.subplot(4,2,2); plt.title("Spatial 1/2"); plt.imshow(spatial_results[0], cmap='gray')
+plt.subplot(4,2,3); plt.title("Freq 1/4"); plt.imshow(freq_results[1], cmap='gray')
+plt.subplot(4,2,4); plt.title("Spatial 1/4"); plt.imshow(spatial_results[1], cmap='gray')
+plt.subplot(4,2,5); plt.title("Freq 1/8"); plt.imshow(freq_results[2], cmap='gray')
+plt.subplot(4,2,6); plt.title("Spatial 1/8"); plt.imshow(spatial_results[2], cmap='gray')
+plt.subplot(4,2,7); plt.title("Freq 1/16"); plt.imshow(freq_results[3], cmap='gray')
+plt.subplot(4,2,8); plt.title("Spatial 1/16"); plt.imshow(spatial_results[3], cmap='gray')
+plt.tight_layout()
+plt.show()
